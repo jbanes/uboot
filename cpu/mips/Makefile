@@ -39,18 +39,18 @@ endif
 # if you use sdram under jz4760 platform,please comment the jz4760_ddr.o
 ifeq ($(CONFIG_CPU_TYPE),4760)
 #allen add
-  COBJS	+= jz4760.o jz4760_nand.o jz4760_eth.o jz4760_mmc.o jz4760_lcd.o
+  COBJS	+= jz4760.o jz4760_nand.o jz4760_eth.o jz4760_mmc.o jz4760_lcd.o 
   ifneq ($(CONFIG_USE_SDRAM),y)
 	COBJS	+= jz4760_ddr.o
   endif
 endif
 
 ifeq ($(CONFIG_CPU_TYPE),4760b)
-  COBJS	+= jz4760b.o jz4760b_nand.o jz4760_eth.o jz4760_mmc.o jz4760_lcd.o jz4760b_ddr.o
+  COBJS	+= jz4760b.o jz4760b_nand.o jz4760_eth.o jz4760_mmc.o jz4760_lcd.o jz4760b_ddr.o 
 endif
 
 ifeq ($(CONFIG_CPU_TYPE),4770)
-COBJS	+= jz4770.o jz4770_nand.o jz4770_eth.o jz4770_ddr.o
+COBJS	+= jz4770.o jz4770_nand.o jz4770_eth.o jz4770_mmc.o jz4770_lcd.o jz4770_ddr.o 
 endif
 
 ifeq ($(CONFIG_CPU_TYPE),4810)

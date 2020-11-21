@@ -911,6 +911,266 @@ static inline u32 jz_readl(u32 address)
 #define REG_MDMAC_DMACKES     	REG32(MDMAC_DMACKES)
 #define REG_MDMAC_DMACKEC     	REG32(MDMAC_DMACKEC)
 
+/***************************************************************************
+ * BCH & NAND DMAC
+ ***************************************************************************/
+/* n is the DMA channel index (0 - 2) */
+#define BDMAC_DSAR(n)		(BDMAC_BASE + (0x00 + (n) * 0x20)) /* DMA source address */
+#define BDMAC_DTAR(n)  		(BDMAC_BASE + (0x04 + (n) * 0x20)) /* DMA target address */
+#define BDMAC_DTCR(n)  		(BDMAC_BASE + (0x08 + (n) * 0x20)) /* DMA transfer count */
+#define BDMAC_DRSR(n)  		(BDMAC_BASE + (0x0c + (n) * 0x20)) /* DMA request source */
+#define BDMAC_DCCSR(n) 		(BDMAC_BASE + (0x10 + (n) * 0x20)) /* DMA control/status */
+#define BDMAC_DCMD(n)  		(BDMAC_BASE + (0x14 + (n) * 0x20)) /* DMA command */
+#define BDMAC_DDA(n)   		(BDMAC_BASE + (0x18 + (n) * 0x20)) /* DMA descriptor address */
+#define BDMAC_DSD(n)   		(BDMAC_BASE + (0x1c + (n) * 0x20)) /* DMA Stride Address */
+#define BDMAC_DNT(n)  		(BDMAC_BASE + (0xc0 + (n) * 0x04)) /* NAND Detect Timer */
+
+#define BDMAC_DMACR			(BDMAC_BASE + 0x0300) 	/* DMA control register */
+#define BDMAC_DMAIPR		(BDMAC_BASE + 0x0304) 	/* DMA interrupt pending */
+#define BDMAC_DMADBR		(BDMAC_BASE + 0x0308) 	/* DMA doorbell */
+#define BDMAC_DMADBSR		(BDMAC_BASE + 0x030C) 	/* DMA doorbell set */
+#define BDMAC_DMACKE  		(BDMAC_BASE + 0x0310)
+
+#define REG_BDMAC_DSAR(n)	REG32(BDMAC_DSAR((n)))
+#define REG_BDMAC_DTAR(n)	REG32(BDMAC_DTAR((n)))
+#define REG_BDMAC_DTCR(n)	REG32(BDMAC_DTCR((n)))
+#define REG_BDMAC_DRSR(n)	REG32(BDMAC_DRSR((n)))
+#define REG_BDMAC_DCCSR(n)	REG32(BDMAC_DCCSR((n)))
+#define REG_BDMAC_DCMD(n)	REG32(BDMAC_DCMD((n)))
+#define REG_BDMAC_DDA(n)	REG32(BDMAC_DDA((n)))
+#define REG_BDMAC_DSD(n)    REG32(BDMAC_DSD(n))
+#define REG_BDMAC_DNT(n)	REG32(BDMAC_DNT(n))
+
+#define REG_BDMAC_DMACR		REG32(BDMAC_DMACR)
+#define REG_BDMAC_DMAIPR	REG32(BDMAC_DMAIPR)
+#define REG_BDMAC_DMADBR	REG32(BDMAC_DMADBR)
+#define REG_BDMAC_DMADBSR	REG32(BDMAC_DMADBSR)
+#define REG_BDMAC_DMACKE    REG32(BDMAC_DMACKE)
+
+// BDMA request source register
+#define BDMAC_DRSR_RS_BIT	0
+  #define BDMAC_DRSR_RS_MASK	(0x3f << DMAC_DRSR_RS_BIT)
+  #define BDMAC_DRSR_RS_NAND	(1 << DMAC_DRSR_RS_BIT)
+  #define BDMAC_DRSR_RS_BCH_ENC	(2 << DMAC_DRSR_RS_BIT)
+  #define BDMAC_DRSR_RS_BCH_DEC	(3 << DMAC_DRSR_RS_BIT)
+  #define BDMAC_DRSR_RS_AUTO	(8 << DMAC_DRSR_RS_BIT)
+  #define BDMAC_DRSR_RS_EXT	(12 << DMAC_DRSR_RS_BIT)
+
+// BDMA channel control/status register
+#define BDMAC_DCCSR_NDES	(1 << 31) /* descriptor (0) or not (1) ? */
+#define BDMAC_DCCSR_DES8    	(1 << 30) /* Descriptor 8 Word */
+#define BDMAC_DCCSR_DES4    	(0 << 30) /* Descriptor 4 Word */
+#define BDMAC_DCCSR_CDOA_BIT	16        /* copy of DMA offset address */
+  #define BDMAC_DCCSR_CDOA_MASK	(0xff << BDMACC_DCCSR_CDOA_BIT)
+#define BDMAC_DCCSR_BERR	(1 << 7)  /* BCH error within this transfer, Only for channel 0 */
+#define BDMAC_DCCSR_AR		(1 << 4)  /* address error */
+#define BDMAC_DCCSR_TT		(1 << 3)  /* transfer terminated */
+#define BDMAC_DCCSR_HLT		(1 << 2)  /* DMA halted */
+#define BDMAC_DCCSR_EN		(1 << 0)  /* channel enable bit */
+
+// BDMA channel command register
+#define BDMAC_DCMD_EACKS_LOW  	(1 << 31) /* External DACK Output Level Select, active low */
+#define BDMAC_DCMD_EACKS_HIGH  	(0 << 31) /* External DACK Output Level Select, active high */
+#define BDMAC_DCMD_EACKM_WRITE 	(1 << 30) /* External DACK Output Mode Select, output in write cycle */
+#define BDMAC_DCMD_EACKM_READ 	(0 << 30) /* External DACK Output Mode Select, output in read cycle */
+#define BDMAC_DCMD_ERDM_BIT	28        /* External DREQ Detection Mode Select */
+  #define BDMAC_DCMD_ERDM_MASK	(0x03 << BDMAC_DCMD_ERDM_BIT)
+  #define BDMAC_DCMD_ERDM_LOW	(0 << BDMAC_DCMD_ERDM_BIT)
+  #define BDMAC_DCMD_ERDM_FALL	(1 << BDMAC_DCMD_ERDM_BIT)
+  #define BDMAC_DCMD_ERDM_HIGH	(2 << BDMAC_DCMD_ERDM_BIT)
+  #define BDMAC_DCMD_ERDM_RISE	(3 << BDMAC_DCMD_ERDM_BIT)
+#define BDMAC_DCMD_BLAST	(1 << 25) /* BCH last */
+#define BDMAC_DCMD_SAI		(1 << 23) /* source address increment */
+#define BDMAC_DCMD_DAI		(1 << 22) /* dest address increment */
+#define BDMAC_DCMD_SWDH_BIT	14  /* source port width */
+  #define BDMAC_DCMD_SWDH_MASK	(0x03 << BDMAC_DCMD_SWDH_BIT)
+  #define BDMAC_DCMD_SWDH_32	(0 << BDMAC_DCMD_SWDH_BIT)
+  #define BDMAC_DCMD_SWDH_8	(1 << BDMAC_DCMD_SWDH_BIT)
+  #define BDMAC_DCMD_SWDH_16	(2 << BDMAC_DCMD_SWDH_BIT)
+#define BDMAC_DCMD_DWDH_BIT	12  /* dest port width */
+  #define BDMAC_DCMD_DWDH_MASK	(0x03 << BDMAC_DCMD_DWDH_BIT)
+  #define BDMAC_DCMD_DWDH_32	(0 << BDMAC_DCMD_DWDH_BIT)
+  #define BDMAC_DCMD_DWDH_8	(1 << BDMAC_DCMD_DWDH_BIT)
+  #define BDMAC_DCMD_DWDH_16	(2 << BDMAC_DCMD_DWDH_BIT)
+#define BDMAC_DCMD_DS_BIT	8  /* transfer data size of a data unit */
+  #define BDMAC_DCMD_DS_MASK	(0x07 << BDMAC_DCMD_DS_BIT)
+  #define BDMAC_DCMD_DS_32BIT	(0 << BDMAC_DCMD_DS_BIT)
+  #define BDMAC_DCMD_DS_8BIT	(1 << BDMAC_DCMD_DS_BIT)
+  #define BDMAC_DCMD_DS_16BIT	(2 << BDMAC_DCMD_DS_BIT)
+  #define BDMAC_DCMD_DS_16BYTE	(3 << BDMAC_DCMD_DS_BIT)
+  #define BDMAC_DCMD_DS_32BYTE	(4 << BDMAC_DCMD_DS_BIT)
+  #define BDMAC_DCMD_DS_64BYTE	(5 << BDMAC_DCMD_DS_BIT)
+#define BDMAC_DCMD_NRD   	(1 << 7)  /* NAND direct read */
+#define BDMAC_DCMD_NWR   	(1 << 6)  /* NAND direct write */
+#define BDMAC_DCMD_NAC   	(1 << 5)  /* NAND AL/CL enable */
+#define BDMAC_DCMD_STDE   	(1 << 2)  /* Stride Disable/Enable */
+#define BDMAC_DCMD_TIE		(1 << 1)  /* DMA transfer interrupt enable */
+#define BDMAC_DCMD_LINK		(1 << 0)  /* descriptor link enable */
+
+// BDMA descriptor address register
+#define BDMAC_DDA_BASE_BIT	12  /* descriptor base address */
+  #define BDMAC_DDA_BASE_MASK	(0x0fffff << BDMAC_DDA_BASE_BIT)
+#define BDMAC_DDA_OFFSET_BIT	4   /* descriptor offset address */
+  #define BDMAC_DDA_OFFSET_MASK	(0x0ff << BDMAC_DDA_OFFSET_BIT)
+
+// BDMA stride address register
+#define BDMAC_DSD_TSD_BIT	16	/* target stride address */
+  #define BDMAC_DSD_TSD_MASK	(0xffff << BDMAC_DSD_TSD_BIT)
+#define BDMAC_DSD_SSD_BIT	0	/* source stride address */
+  #define BDMAC_DSD_SSD_MASK	(0xffff << BDMAC_DSD_SSD_BIT)
+
+// BDMA NAND Detect timer register
+#define BDMAC_NDTCTIMER_EN	(1 << 15)  /* enable detect timer */
+#define BDMAC_TAILCNT_BIT	16
+
+// BDMA control register
+#define BDMAC_DMACR_PR_BIT	8	/* channel priority mode */
+  #define BDMAC_DMACR_PR_MASK	(0x03 << DMAC_DMACR_PR_BIT)
+  #define BDMAC_DMACR_PR_01_2	(0 << BDMAC_DMACR_PR_BIT)
+  #define BDMAC_DMACR_PR_12_0	(1 << BDMAC_DMACR_PR_BIT)
+  #define BDMAC_DMACR_PR_20_1	(2 << BDMAC_DMACR_PR_BIT)
+  #define BDMAC_DMACR_PR_012	(3 << BDMAC_DMACR_PR_BIT)
+#define BDMAC_DMACR_HLT		(1 << 3)  /* DMA halt flag */
+#define BDMAC_DMACR_AR		(1 << 2)  /* address error flag */
+#define BDMAC_DMACR_DMAE	(1 << 0)  /* DMA enable bit */
+
+// BDMA interrupt pending register
+#define BDMAC_DMAIPR_CIRQ2	(1 << 2)  /* irq pending status for channel 2 */
+#define BDMAC_DMAIPR_CIRQ1	(1 << 1)  /* irq pending status for channel 1 */
+#define BDMAC_DMAIPR_CIRQ0	(1 << 0)  /* irq pending status for channel 0 */
+
+// BDMA doorbell register
+#define BDMAC_DMADBR_DB2	(1 << 2)  /* doorbell for channel 2 */
+#define BDMAC_DMADBR_DB1	(1 << 1)  /* doorbell for channel 1 */
+#define BDMAC_DMADBR_DB0	(1 << 0)  /* doorbell for channel 0 */
+
+// BDMA doorbell set register
+#define BDMAC_DMADBSR_DBS2	(1 << 2)  /* enable doorbell for channel 2 */
+#define BDMAC_DMADBSR_DBS1	(1 << 1)  /* enable doorbell for channel 1 */
+#define BDMAC_DMADBSR_DBS0	(1 << 0)  /* enable doorbell for channel 0 */
+
+/* n is the DMA channel index (0 - 2) */
+
+#define __bdmac_test_halt_error ( REG_BDMAC_DMACR & BDMAC_DMACR_HLT )
+#define __bdmac_test_addr_error ( REG_BDMAC_DMACR & BDMAC_DMACR_AR )
+
+#define __bdmac_channel_enable_clk(n)           \
+	REG_BDMAC_DMACKE |= 1 << (n);
+
+#define __bdmac_enable_descriptor(n) \
+  ( REG_BDMAC_DCCSR((n)) &= ~BDMAC_DCCSR_NDES )
+#define __bdmac_disable_descriptor(n) \
+  ( REG_BDMAC_DCCSR((n)) |= BDMAC_DCCSR_NDES )
+
+#define __bdmac_enable_channel(n)                 \
+do {                                             \
+	REG_BDMAC_DCCSR((n)) |= BDMAC_DCCSR_EN;    \
+} while (0)
+#define __bdmac_disable_channel(n)                \
+do {                                             \
+	REG_BDMAC_DCCSR((n)) &= ~BDMAC_DCCSR_EN;   \
+} while (0)
+
+#define __bdmac_channel_enable_irq(n) \
+  ( REG_BDMAC_DCMD((n)) |= BDMAC_DCMD_TIE )
+#define __bdmac_channel_disable_irq(n) \
+  ( REG_BDMAC_DCMD((n)) &= ~BDMAC_DCMD_TIE )
+
+#define __bdmac_channel_transmit_halt_detected(n) \
+  (  REG_BDMAC_DCCSR((n)) & BDMAC_DCCSR_HLT )
+#define __bdmac_channel_transmit_end_detected(n) \
+  (  REG_BDMAC_DCCSR((n)) & BDMAC_DCCSR_TT )
+#define __bdmac_channel_address_error_detected(n) \
+  (  REG_BDMAC_DCCSR((n)) & BDMAC_DCCSR_AR )
+#define __bdmac_channel_count_terminated_detected(n) \
+  (  REG_BDMAC_DCCSR((n)) & BDMAC_DCCSR_CT )
+#define __bdmac_channel_descriptor_invalid_detected(n) \
+  (  REG_BDMAC_DCCSR((n)) & BDMAC_DCCSR_INV )
+#define __bdmac_BCH_error_detected(n) \
+  (  REG_BDMAC_DCCSR((n)) & BDMAC_DCCSR_BERR )
+
+#define __bdmac_channel_clear_transmit_halt(n)				\
+	do {								\
+		/* clear both channel halt error and globle halt error */ \
+		REG_BDMAC_DCCSR(n) &= ~BDMAC_DCCSR_HLT;			\
+		REG_BDMAC_DMACR &= ~BDMAC_DMACR_HLT;	\
+	} while (0)
+#define __bdmac_channel_clear_transmit_end(n) \
+  (  REG_BDMAC_DCCSR(n) &= ~BDMAC_DCCSR_TT )
+#define __bdmac_channel_clear_address_error(n)				\
+	do {								\
+		REG_BDMAC_DDA(n) = 0; /* clear descriptor address register */ \
+		REG_BDMAC_DSAR(n) = 0; /* clear source address register */ \
+		REG_BDMAC_DTAR(n) = 0; /* clear target address register */ \
+		/* clear both channel addr error and globle address error */ \
+		REG_BDMAC_DCCSR(n) &= ~BDMAC_DCCSR_AR;			\
+		REG_BDMAC_DMACR &= ~BDMAC_DMACR_AR;	\
+	} while (0)
+#define __bdmac_channel_clear_count_terminated(n) \
+  (  REG_BDMAC_DCCSR((n)) &= ~BDMAC_DCCSR_CT )
+#define __bdmac_channel_clear_descriptor_invalid(n) \
+  (  REG_BDMAC_DCCSR((n)) &= ~BDMAC_DCCSR_INV )
+
+#define __bdmac_channel_set_transfer_unit_32bit(n)	\
+do {							\
+	REG_BDMAC_DCMD((n)) &= ~BDMAC_DCMD_DS_MASK;	\
+	REG_BDMAC_DCMD((n)) |= BDMAC_DCMD_DS_32BIT;	\
+} while (0)
+
+#define __bdmac_channel_set_transfer_unit_16bit(n)	\
+do {							\
+	REG_BDMAC_DCMD((n)) &= ~BDMAC_DCMD_DS_MASK;	\
+	REG_BDMAC_DCMD((n)) |= BDMAC_DCMD_DS_16BIT;	\
+} while (0)
+
+#define __bdmac_channel_set_transfer_unit_8bit(n)	\
+do {							\
+	REG_BDMAC_DCMD((n)) &= ~BDMAC_DCMD_DS_MASK;	\
+	REG_BDMAC_DCMD((n)) |= BDMAC_DCMD_DS_8BIT;	\
+} while (0)
+
+#define __bdmac_channel_set_transfer_unit_16byte(n)	\
+do {							\
+	REG_BDMAC_DCMD((n)) &= ~BDMAC_DCMD_DS_MASK;	\
+	REG_BDMAC_DCMD((n)) |= BDMAC_DCMD_DS_16BYTE;	\
+} while (0)
+
+#define __bdmac_channel_set_transfer_unit_32byte(n)	\
+do {							\
+	REG_BDMAC_DCMD((n)) &= ~BDMAC_DCMD_DS_MASK;	\
+	REG_BDMAC_DCMD((n)) |= BDMAC_DCMD_DS_32BYTE;	\
+} while (0)
+
+/* w=8,16,32 */
+#define __bdmac_channel_set_dest_port_width(n,w)		\
+do {							\
+	REG_BDMAC_DCMD((n)) &= ~BDMAC_DCMD_DWDH_MASK;	\
+	REG_BDMAC_DCMD((n)) |= BDMAC_DCMD_DWDH_##w;	\
+} while (0)
+
+/* w=8,16,32 */
+#define __bdmac_channel_set_src_port_width(n,w)		\
+do {							\
+	REG_BDMAC_DCMD((n)) &= ~BDMAC_DCMD_SWDH_MASK;	\
+	REG_BDMAC_DCMD((n)) |= BDMAC_DCMD_SWDH_##w;	\
+} while (0)
+
+#define __bdmac_channel_dest_addr_fixed(n) \
+	(REG_BDMAC_DCMD((n)) &= ~BDMAC_DCMD_DAI)
+#define __bdmac_channel_dest_addr_increment(n) \
+	(REG_BDMAC_DCMD((n)) |= BDMAC_DCMD_DAI)
+
+#define __bdmac_channel_src_addr_fixed(n) \
+	(REG_BDMAC_DCMD((n)) &= ~BDMAC_DCMD_SAI)
+#define __bdmac_channel_src_addr_increment(n) \
+	(REG_BDMAC_DCMD((n)) |= BDMAC_DCMD_SAI)
+
+#define __bdmac_channel_set_doorbell(n)	\
+	(REG_BDMAC_DMADBSR = (1 << (n)))
+
+#define __bdmac_channel_irq_detected(n)  (REG_BDMAC_DMAIPR & (1 << (n)))
+#define __bdmac_channel_ack_irq(n)       (REG_BDMAC_DMAIPR &= ~(1 <<(n)))
+
 /*************************************************************************
  * DMAC (DMA Controller)
  *************************************************************************/
@@ -1112,6 +1372,40 @@ static inline u32 jz_readl(u32 address)
 
 //n = 0,1,2,3,4,5
 #define GPIO_PXPIN(n)	(GPIO_BASE + (0x00 + (n)*0x100)) /* PIN Level Register */
+#define GPIO_PXDAT(n)	(GPIO_BASE + (0x10 + (n)*0x100)) /* Port Data Register */
+#define GPIO_PXDATS(n)	(GPIO_BASE + (0x14 + (n)*0x100)) /* Port Data Set Register */
+#define GPIO_PXDATC(n)	(GPIO_BASE + (0x18 + (n)*0x100)) /* Port Data Clear Register */
+#define GPIO_PXIM(n)	(GPIO_BASE + (0x20 + (n)*0x100)) /* Interrupt Mask Register */
+#define GPIO_PXIMS(n)	(GPIO_BASE + (0x24 + (n)*0x100)) /* Interrupt Mask Set Reg */
+#define GPIO_PXIMC(n)	(GPIO_BASE + (0x28 + (n)*0x100)) /* Interrupt Mask Clear Reg */
+#define GPIO_PXPE(n)	(GPIO_BASE + (0x30 + (n)*0x100)) /* Pull Disable Register */
+#define GPIO_PXPES(n)	(GPIO_BASE + (0x34 + (n)*0x100)) /* Pull Disable Set Reg. */
+#define GPIO_PXPEC(n)	(GPIO_BASE + (0x38 + (n)*0x100)) /* Pull Disable Clear Reg. */
+#define GPIO_PXFUN(n)	(GPIO_BASE + (0x40 + (n)*0x100)) /* Function Register */
+#define GPIO_PXFUNS(n)	(GPIO_BASE + (0x44 + (n)*0x100)) /* Function Set Register */
+#define GPIO_PXFUNC(n)	(GPIO_BASE + (0x48 + (n)*0x100)) /* Function Clear Register */
+#define GPIO_PXSEL(n)	(GPIO_BASE + (0x50 + (n)*0x100)) /* Select Register */
+#define GPIO_PXSELS(n)	(GPIO_BASE + (0x54 + (n)*0x100)) /* Select Set Register */
+#define GPIO_PXSELC(n)	(GPIO_BASE + (0x58 + (n)*0x100)) /* Select Clear Register */
+#define GPIO_PXDIR(n)	(GPIO_BASE + (0x60 + (n)*0x100)) /* Direction Register */
+#define GPIO_PXDIRS(n)	(GPIO_BASE + (0x64 + (n)*0x100)) /* Direction Set Register */
+#define GPIO_PXDIRC(n)	(GPIO_BASE + (0x68 + (n)*0x100)) /* Direction Clear Register */
+#define GPIO_PXTRG(n)	(GPIO_BASE + (0x70 + (n)*0x100)) /* Trigger Register */
+#define GPIO_PXTRGS(n)	(GPIO_BASE + (0x74 + (n)*0x100)) /* Trigger Set Register */
+#define GPIO_PXTRGC(n)	(GPIO_BASE + (0x78 + (n)*0x100)) /* Trigger Clear Register */
+#define GPIO_PXFLG(n)	(GPIO_BASE + (0x80 + (n)*0x100)) /* Port Flag Register */
+#define GPIO_PXFLGC(n)	(GPIO_BASE + (0x14 + (n)*0x100)) /* Port Flag clear Register */
+//medive add
+#define GPIO_GOS     0x100
+#define GPIO_PXDS0S_OFFSET (0xc4)
+#define GPIO_PXDS1S_OFFSET (0xd4)
+#define GPIO_PXDS2S_OFFSET (0xe4)
+#define GPIO_PXDS0S(n)	(GPIO_BASE + (n)*GPIO_GOS + GPIO_PXDS0S_OFFSET)
+#define GPIO_PXDS1S(n)	(GPIO_BASE + (n)*GPIO_GOS + GPIO_PXDS1S_OFFSET)
+#define GPIO_PXDS2S(n)	(GPIO_BASE + (n)*GPIO_GOS + GPIO_PXDS2S_OFFSET)
+
+//n = 0,1,2,3,4,5
+#define GPIO_PXPIN(n)	(GPIO_BASE + (0x00 + (n)*0x100)) /* PIN Level Register */
 #define GPIO_PXINT(n)	(GPIO_BASE + (0x10 + (n)*0x100)) /* Port Interrupt Register */
 #define GPIO_PXINTS(n)	(GPIO_BASE + (0x14 + (n)*0x100)) /* Port Interrupt Set Register */
 #define GPIO_PXINTC(n)	(GPIO_BASE + (0x18 + (n)*0x100)) /* Port Interrupt Clear Register */
@@ -1124,8 +1418,6 @@ static inline u32 jz_readl(u32 address)
 #define GPIO_PXPAT0(n)	(GPIO_BASE + (0x40 + (n)*0x100)) /* Port Pattern 0 Register */
 #define GPIO_PXPAT0S(n)	(GPIO_BASE + (0x44 + (n)*0x100)) /* Port Pattern 0 Set Register */
 #define GPIO_PXPAT0C(n)	(GPIO_BASE + (0x48 + (n)*0x100)) /* Port Pattern 0 Clear Register */
-#define GPIO_PXFLG(n)	(GPIO_BASE + (0x50 + (n)*0x100)) /* Port Flag Register */
-#define GPIO_PXFLGC(n)	(GPIO_BASE + (0x54 + (n)*0x100)) /* Port Flag clear Register */
 #define GPIO_PXOEN(n)	(GPIO_BASE + (0x60 + (n)*0x100)) /* Port Output Disable Register */
 #define GPIO_PXOENS(n)	(GPIO_BASE + (0x64 + (n)*0x100)) /* Port Output Disable Set Register */
 #define GPIO_PXOENC(n)	(GPIO_BASE + (0x68 + (n)*0x100)) /* Port Output Disable Clear Register */
@@ -1160,6 +1452,34 @@ static inline u32 jz_readl(u32 address)
 #define REG_GPIO_PXDS(n)	REG32(GPIO_PXDS((n)))
 #define REG_GPIO_PXDSS(n)	REG32(GPIO_PXDSS((n))) /* interrupt flag */
 #define REG_GPIO_PXDSC(n)	REG32(GPIO_PXDSC((n))) /* interrupt flag */
+#define REG_GPIO_PXDAT(n)	REG32(GPIO_PXDAT((n)))  /* 1: interrupt pending */
+#define REG_GPIO_PXDATS(n)	REG32(GPIO_PXDATS((n)))
+#define REG_GPIO_PXDATC(n)	REG32(GPIO_PXDATC((n)))
+#define REG_GPIO_PXIM(n)	REG32(GPIO_PXIM((n)))   /* 1: mask pin interrupt */
+#define REG_GPIO_PXIMS(n)	REG32(GPIO_PXIMS((n)))
+#define REG_GPIO_PXIMC(n)	REG32(GPIO_PXIMC((n)))
+#define REG_GPIO_PXPE(n)	REG32(GPIO_PXPE((n)))   /* 1: disable pull up/down */
+#define REG_GPIO_PXPES(n)	REG32(GPIO_PXPES((n)))
+#define REG_GPIO_PXPEC(n)	REG32(GPIO_PXPEC((n)))
+#define REG_GPIO_PXFUN(n)	REG32(GPIO_PXFUN((n)))  /* 0:GPIO/INTR, 1:FUNC */
+#define REG_GPIO_PXFUNS(n)	REG32(GPIO_PXFUNS((n)))
+#define REG_GPIO_PXFUNC(n)	REG32(GPIO_PXFUNC((n)))
+#define REG_GPIO_PXSEL(n)	REG32(GPIO_PXSEL((n))) /* 0:GPIO/Fun0,1:intr/fun1*/
+#define REG_GPIO_PXSELS(n)	REG32(GPIO_PXSELS((n)))
+#define REG_GPIO_PXSELC(n)	REG32(GPIO_PXSELC((n)))
+#define REG_GPIO_PXDIR(n)	REG32(GPIO_PXDIR((n))) /* 0:input/low-level-trig/falling-edge-trig, 1:output/high-level-trig/rising-edge-trig */
+#define REG_GPIO_PXDIRS(n)	REG32(GPIO_PXDIRS((n)))
+#define REG_GPIO_PXDIRC(n)	REG32(GPIO_PXDIRC((n)))
+#define REG_GPIO_PXTRG(n)	REG32(GPIO_PXTRG((n))) /* 0:Level-trigger/Fun0, 1:Edge-trigger/Fun1 */
+#define REG_GPIO_PXTRGS(n)	REG32(GPIO_PXTRGS((n)))
+#define REG_GPIO_PXTRGC(n)	REG32(GPIO_PXTRGC((n)))
+#define REG_GPIO_PXFLG(n)	REG32(GPIO_PXFLG((n))) /* interrupt flag */
+#define REG_GPIO_PXFLGC(n)	REG32(GPIO_PXFLGC((n))) /* interrupt flag */
+
+//medive add
+#define REG_GPIO_PXDS0S(n)	REG32(GPIO_PXDS0S(n))
+#define REG_GPIO_PXDS1S(n)	REG32(GPIO_PXDS1S(n))
+#define REG_GPIO_PXDS2S(n)	REG32(GPIO_PXDS2S(n))
 
 
 /*************************************************************************
@@ -2638,30 +2958,32 @@ static inline u32 jz_readl(u32 address)
 #define	CIM_CMD_LEN_BIT		0
 #define	CIM_CMD_LEN_MASK	(0xffffff << CIM_CMD_LEN_BIT)
 
-
 /*************************************************************************
  * SADC (Smart A/D Controller)
  *************************************************************************/
 
-#define SADC_ENA	(SADC_BASE + 0x00)  /* ADC Enable Register */
-#define SADC_CFG	(SADC_BASE + 0x04)  /* ADC Configure Register */
-#define SADC_CTRL	(SADC_BASE + 0x08)  /* ADC Control Register */
-#define SADC_STATE	(SADC_BASE + 0x0C)  /* ADC Status Register*/
-#define SADC_SAMETIME	(SADC_BASE + 0x10)  /* ADC Same Point Time Register */
-#define SADC_WAITTIME	(SADC_BASE + 0x14)  /* ADC Wait Time Register */
-#define SADC_TSDAT	(SADC_BASE + 0x18)  /* ADC Touch Screen Data Register */
-#define SADC_BATDAT	(SADC_BASE + 0x1C)  /* ADC PBAT Data Register */
-#define SADC_SADDAT	(SADC_BASE + 0x20)  /* ADC SADCIN Data Register */
+#define SADC_ENA        (SADC_BASE + 0x00)  /* ADC Enable Register */
+#define SADC_CFG        (SADC_BASE + 0x04)  /* ADC Configure Register */
+#define SADC_CTRL       (SADC_BASE + 0x08)  /* ADC Control Register */
+#define SADC_STATE      (SADC_BASE + 0x0C)  /* ADC Status Register*/
+#define SADC_SAMETIME   (SADC_BASE + 0x10)  /* ADC Same Point Time Register */
+#define SADC_WAITTIME   (SADC_BASE + 0x14)  /* ADC Wait Time Register */
+#define SADC_TSDAT      (SADC_BASE + 0x18)  /* ADC Touch Screen Data Register */
+#define SADC_BATDAT     (SADC_BASE + 0x1C)  /* ADC PBAT Data Register */
+#define SADC_SADDAT     (SADC_BASE + 0x20)  /* ADC SADCIN Data Register */
+#define SADC_CLK        (SADC_BASE + 0x28)
 
-#define REG_SADC_ENA		REG8(SADC_ENA)
-#define REG_SADC_CFG		REG32(SADC_CFG)
-#define REG_SADC_CTRL		REG8(SADC_CTRL)
-#define REG_SADC_STATE		REG8(SADC_STATE)
-#define REG_SADC_SAMETIME	REG16(SADC_SAMETIME)
-#define REG_SADC_WAITTIME	REG16(SADC_WAITTIME)
-#define REG_SADC_TSDAT		REG32(SADC_TSDAT)
-#define REG_SADC_BATDAT		REG16(SADC_BATDAT)
-#define REG_SADC_SADDAT		REG16(SADC_SADDAT)
+
+#define REG_SADC_ENA            REG8(SADC_ENA)
+#define REG_SADC_CFG            REG32(SADC_CFG)
+#define REG_SADC_CTRL           REG8(SADC_CTRL)
+#define REG_SADC_STATE          REG8(SADC_STATE)
+#define REG_SADC_SAMETIME       REG16(SADC_SAMETIME)
+#define REG_SADC_WAITTIME       REG16(SADC_WAITTIME)
+#define REG_SADC_TSDAT          REG32(SADC_TSDAT)
+#define REG_SADC_BATDAT         REG16(SADC_BATDAT)
+#define REG_SADC_SADDAT         REG16(SADC_SADDAT)
+#define REG_SADC_ADCLK          REG32(SADC_CLK)
 
 /* ADC Enable Register */
 #define SADC_ENA_ADEN		(1 << 7)  /* Touch Screen Enable */
@@ -3764,18 +4086,10 @@ do {						\
 
 #define __gpio_as_eth()				\
 do {						\
-	REG_GPIO_PXINTC(1) =  0x00000010;	\
-	REG_GPIO_PXMASKC(1) = 0x00000010;	\
-	REG_GPIO_PXPAT1S(1) = 0x00000010;	\
-	REG_GPIO_PXPAT0C(1) = 0x00000010;	\
-	REG_GPIO_PXINTC(3) =  0x3c000000;	\
-	REG_GPIO_PXMASKC(3) = 0x3c000000;	\
-	REG_GPIO_PXPAT1C(3) = 0x3c000000;	\
-	REG_GPIO_PXPAT0S(3) = 0x3c000000;	\
-	REG_GPIO_PXINTC(5) =  0xfff0;		\
-	REG_GPIO_PXMASKC(5) = 0xfff0;		\
-	REG_GPIO_PXPAT1C(5) = 0xfff0;		\
-	REG_GPIO_PXPAT0C(5) = 0xfff0;		\
+	REG_GPIO_PXFUNS(3) = 0x0001ffff;	\
+	REG_GPIO_PXTRGC(3) = 0x0001ffff;	\
+	REG_GPIO_PXSELC(3) = 0x0001ffff;	\
+	REG_GPIO_PXPES(3) = 0x0001ffff;		\
 } while (0)
 
 
@@ -4220,20 +4534,11 @@ do {						\
 
 #define __gpio_get_port(p)	(REG_GPIO_PXPIN(p))
 
-#define __gpio_port_as_output0(p, o)		\
+#define __gpio_port_as_output(p, o)		\
 do {						\
-    REG_GPIO_PXINTC(p) = (1 << (o));		\						
-    REG_GPIO_PXMASKS(p) = (1 << (o));		\						
-    REG_GPIO_PXPAT1C(p) = (1 << (o));		\
-    REG_GPIO_PXPAT0C(p) = (1 << (o));		\
-} while (0)
-
-#define __gpio_port_as_output1(p, o)		\
-do {						\
-    REG_GPIO_PXINTC(p) = (1 << (o));		\
-    REG_GPIO_PXMASKS(p) = (1 << (o));		\
-    REG_GPIO_PXPAT1C(p) = (1 << (o));		\
-    REG_GPIO_PXPAT0S(p) = (1 << (o));		\
+    REG_GPIO_PXFUNC(p) = (1 << (o));		\
+    REG_GPIO_PXSELC(p) = (1 << (o));		\
+    REG_GPIO_PXDIRS(p) = (1 << (o));		\
 } while (0)
 
 #define __gpio_port_as_input(p, o)		\
@@ -4243,20 +4548,12 @@ do {						\
     REG_GPIO_PXDIRC(p) = (1 << (o));		\
 } while (0)
 
-#define __gpio_as_output0(n)			\
+#define __gpio_as_output(n)			\
 do {						\
 	unsigned int p, o;			\
 	p = (n) / 32;				\
 	o = (n) % 32;				\
-	__gpio_port_as_output0(p, o);		\
-} while (0)
-
-#define __gpio_as_output1(n)			\
-do {						\
-	unsigned int p, o;			\
-	p = (n) / 32;				\
-	o = (n) % 32;				\
-	__gpio_port_as_output1(p, o);		\
+	__gpio_port_as_output(p, o);		\
 } while (0)
 
 #define __gpio_as_input(n)			\
@@ -4265,6 +4562,22 @@ do {						\
 	p = (n) / 32;				\
 	o = (n) % 32;				\
 	__gpio_port_as_input(p, o);		\
+} while (0)
+
+#define __gpio_set_pin(n)			\
+do {						\
+	unsigned int p, o;			\
+	p = (n) / 32;				\
+	o = (n) % 32;				\
+	REG_GPIO_PXDATS(p) = (1 << o);		\
+} while (0)
+
+#define __gpio_clear_pin(n)			\
+do {						\
+	unsigned int p, o;			\
+	p = (n) / 32;				\
+	o = (n) % 32;				\
+	REG_GPIO_PXDATC(p) = (1 << o);		\
 } while (0)
 
 #define __gpio_get_pin(n)			\

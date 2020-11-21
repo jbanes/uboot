@@ -189,6 +189,123 @@ do {					\
 }
 #endif
 
+//allen add
+
+#define BITS_H2L(msb,lsb)  ((0xFFFFFFFF >> (32-((msb)-(lsb)+1))) << (lsb))
+
+#define ADCLK_CLKDIV_LSB 0
+#define ADCLK_CLKDIV_MASK     BITS_H2L(7,ADCLK_CLKDIV_LSB)
+
+#define HWFCR_LSB 5
+#define HWFCR_MASK  BITS_H2L(15,HWFCR_LSB)
+#define HWFCR_WAIT_TIME(ms) (((ms) << HWFCR_LSB) > HWFCR_MASK ? HWFCR_MASK : ((ms) << HWFCR_LSB))
+
+#define HSPR_RTCV  0x52544356
+#define HCR_PD (1 << 0)
+
+#define RTCCR_WRDY 0x80
+#define WENR_WEN 0x80000000
+#define WENR_WENPAT_WRITABLE (0xa55a)
+
+#define INREG32(x)  ((unsigned int)(*(volatile unsigned int *)(x)))
+#define OUTREG32(x,y)  *(volatile unsigned int *)(x) = (y)
+
+/* Waiting for the RTC register writing finish */
+#define __wait_write_ready()                                            \
+do {                                                                    \
+        unsigned int timeout = 1;                                       \
+        while (!(rtc_read_reg(RTC_RCR) & RTCCR_WRDY) && timeout++);     \
+}while(0);
+
+/* Waiting for the RTC register writable */
+#define __wait_writable()                                               \
+do {                                                                    \
+        unsigned int timeout = 1;                                       \
+        __wait_write_ready();                                           \
+        OUTREG32(RTC_WENR, WENR_WENPAT_WRITABLE);                       \
+        __wait_write_ready();                                           \
+        while (!(rtc_read_reg(RTC_WENR) & WENR_WEN) && timeout++);      \
+}while(0);
+
+/* Basic RTC ops */
+#define rtc_read_reg(reg)                               \
+({                                                      \
+        unsigned int data;                              \
+        do {                                            \
+                data = INREG32(reg);                    \
+        } while (INREG32(reg) != data);                 \
+        data;                                           \
+})
+
+#define rtc_write_reg(reg, data)                        \
+do {                                                    \
+        __wait_writable();                              \
+        OUTREG32(reg, data);                            \
+        __wait_write_ready();                           \
+}while(0);
+
+static int bat_inited;
+void me_battery_init(void)
+{
+        if (bat_inited)
+                return;
+        int div ;
+        REG_CPM_CLKGR0 &= ~(1 << 14);
+        div = 120 -1;  //working at 100KHZ
+        REG_SADC_ADCLK = (REG_SADC_ADCLK & ~ADCLK_CLKDIV_MASK) | div;
+  //REG_SADC_ENA  = 0;
+        REG_SADC_ENA  &= ~(1 << 7); //allen mod
+        udelay(10);
+        REG_SADC_CTRL = 0x3f;
+        REG_SADC_CFG  = 0x2;
+        REG_SADC_STATE = 0x3f;
+        udelay(500);
+        REG_SADC_ENA |= 0x2;
+        bat_inited = 1;
+
+}
+
+void sadc_start_pbat(void)
+{
+        REG_SADC_ENA |= 0x2;
+        udelay(300);
+}
+
+void sadc_stop_pbat(void)
+{
+        REG_SADC_STATE |= 0x2;
+        REG_SADC_ENA &= ~0x2;
+}
+
+void me_do_hibernate(void)
+{
+        /* Set minimum wakeup_n pin low-level assertion time for wakeup: 100ms */
+        rtc_write_reg(RTC_HWFCR, HWFCR_WAIT_TIME(100));
+
+        /* Set reset pin low-level assertion time after wakeup: must  > 60ms */
+        rtc_write_reg(RTC_HRCR, 60);
+
+        /* Scratch pad register to be reserved */
+        rtc_write_reg(RTC_HSPR, HSPR_RTCV);
+
+        /* clear wakeup status register */
+        //RTC_UNLOCK();
+        rtc_write_reg(RTC_HWRSR, 0x0);
+
+        /* set wake up valid level as low  and disable rtc alarm wake up.*/
+    rtc_write_reg(RTC_HWCR,0x8);  //oxc
+
+
+        /* Put CPU to hibernate mode */
+        serial_puts("-----SNK do hibernate!\n");
+        rtc_write_reg(RTC_HCR,HCR_PD);
+
+        while(1){
+                serial_puts("#SNK do hibernate failed!\n");
+        }
+
+}
+
 //----------------------------------------------------------------------
 // jz4760 board init routine
 

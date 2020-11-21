@@ -72,3 +72,49 @@ int checkboard (void)
 
 	return 0; /* success */
 }
+//----------------------------------------------------
+//allen add (refer to snk uboot)
+
+int usb_detect(void)
+{
+        __gpio_as_input(GPIO_USB_DETE);
+        __gpio_disable_pull(GPIO_USB_DETE);
+
+        //mdelay(1);
+        if(__gpio_get_pin(GPIO_USB_DETE))
+                return 1;
+        else
+                return 0;
+}
+
+int get_battery_mv(void)
+{
+        unsigned int timeout = 0x3fff;
+
+        //return WARN_BATTERY_DATA; //debug test
+
+        me_battery_init();
+        sadc_start_pbat();
+        while((REG_SADC_STATE & SADC_STATE_PBATRDY ) == 0 && (--timeout)){
+                ;
+        }
+        if (timeout < 2){
+                serial_puts("LN430 read vbat timeout!\n");
+                return 0;
+        }
+        unsigned int val = REG_SADC_BATDAT;
+
+        val = (val * 2500 / 4096) * 4;//allen mod
+
+        printf("read vbat value is %d\n",val);
+
+        sadc_stop_pbat();
+
+        return val;
+
+}
+
+void power_off_ub(void)
+{
+         me_do_hibernate();
+}

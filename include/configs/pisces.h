@@ -26,6 +26,15 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#define __GPIO(p, n) (32 * (p - 'A') + n)
+
+#ifdef CONFIG_JZ_RECOVERY
+#define CFG_JZ_LINUX_RECOVERY
+//#define CFG_SUPPORT_RECOVERY_REG
+#define CFG_SUPPORT_RECOVERY_KEY
+//#define CFG_SUPPORT_RECOVERY_MISC
+#endif
+
 #define CONFIG_MIPS32		1  /* MIPS32 CPU core */
 #define CONFIG_JzRISC		1  /* JzRISC core */
 #define CONFIG_JZSOC		1  /* Jz SoC */
@@ -35,7 +44,7 @@
 #define CONFIG_DDR2_DIFFERENTIAL	1	/* differential DQS */
 
 #ifdef CONFIG_MSC_U_BOOT
-//#define CONFIG_MSC_TYPE_SD
+#define CONFIG_MSC_TYPE_SD
 #endif
 
 //#define CONFIG_SDRAM_MDDR
@@ -91,9 +100,9 @@
 #if defined(CONFIG_SDRAM_MDDR)
 #define CONFIG_BOOTARGS		"mem=64M console=ttyS2,57600n8 ip=off root=/dev/mtdblock2 rw"
 #else
-#define CONFIG_BOOTARGS		"mem=256M console=ttyS2,57600n8 ubi.mtd=2 root=ubi0:ubifs rootfstype=ubifs rw"
+#define CONFIG_BOOTARGS		"mem=512M console=ttyS1,57600n8 ip=off rootfstype=ext3 root=/dev/mmcblk0p1 ro panic=5"
 #endif
-#define CONFIG_BOOTCOMMAND	"nand read 0x80600000 0x400000 0x300000;bootm"
+#define CONFIG_BOOTCOMMAND	"msc read 0x80600000 0x400000 0x300000;bootm"
 #define CFG_AUTOLOAD		"n"		/* No autoload */
 
 #define CONFIG_NET_MULTI
@@ -230,6 +239,11 @@
 #ifdef CFG_ENV_IS_IN_MSC
 #define CFG_ENV_SIZE		CFG_MSC_BLOCK_SIZE
 #define CFG_ENV_OFFSET		((CFG_MSC_BLOCK_SIZE * 16) + CFG_MSC_U_BOOT_SIZE + (CFG_MSC_BLOCK_SIZE * 16))	/* environment starts here  */
+
+#ifdef CFG_JZ_LINUX_RECOVERY
+#define CONFIG_DEFAULT_ENV_SIZE         CFG_ENV_SIZE
+#define CFG_ENV_REVY_OFFSET                     (CFG_ENV_OFFSET + CFG_ENV_SIZE) /* environment starts here  */
+#endif
 #endif
 
 /*======== Partition size ============ */
@@ -314,6 +328,43 @@
 /*======================================================================
  * GPIO
  */
-#define GPIO_LCD_PWM   		(32*4+1) /* GPE1 PWM1 */
+// #define GPIO_LCD_PWM   		(32*4+1) /* GPE1 PWM1 */
 
+#ifdef CONFIG_LCD                /* LCD support */
+#define LCD_BPP   LCD_COLOR16
 #endif
+
+#define LOW_BATTERY_DATA                3400
+#define WARN_BATTERY_DATA               3500
+#define NORMAL_BATTERY_DATA             3700
+#define BATTERY_FULL_VALUE              4500//to app
+#define BATTERY_USB_OFFSET              110
+
+#define GPIO_LCD_PWM                    __GPIO('E', 1)  // GPE1 PWM1
+#define GPIO_LCD_VCC_EN                 __GPIO('E', 25) // ln430_9 no use,but no del
+#define GPIO_CHARG_ON                   __GPIO('B', 29) // GPB30 PWM1 */
+#define GPIO_USB_DETE                   __GPIO('D', 7)  // __GPIO('B', 21)
+
+#define GPIO_LCD_POWER_N                __GPIO('B', 31) // GPB31
+#define GPIO_LCD_DISP_N                 __GPIO('F', 6)  // LCD_DISP_N use for lcd reset
+#define GPIO_KEY_WAKEUP                 __GPIO('A', 30) // GPA32 WAKEUP
+#define GPIO_KEY_VOLUME_INC             __GPIO('C', 31) // GPC31  sw1
+#define GPIO_KEY_VOLUME_DEC             __GPIO('C', 29) // GPC29  sw3
+#define GPIO_KEY_MENU                   __GPIO('D', 27) // GPD27
+#define GPIO_KEY_BOOT                   __GPIO('D', 17) // GPD17 BOOT_SEL0
+
+#define UMIDO_KEY_R                             __GPIO('D', 24)
+#define UMIDO_KEY_X                             __GPIO('E', 7)
+
+#define GPIO_SD0_VCC_EN_N               __GPIO('F', 9)  // GPF9
+// #define GPIO_SD0_CD_N                __GPIO('B', 22) // GPB22
+#define GPIO_SD0_CD_N                   __GPIO('F', 0)  // GPF00
+#define GPIO_SD0_WP_N                   __GPIO('F', 4)  // GPF4
+#define GPIO_SD1_VCC_EN_N               __GPIO('E', 9)  // GPE9
+#define GPIO_SD1_CD_N                   __GPIO('A', 28) // GPA28
+
+#define UBOOT_SEL_REVY_KEY1             UMIDO_KEY_R
+#define UBOOT_SEL_REVY_KEY2             UMIDO_KEY_X
+#define UBOOT_SEL_REVY_KEY3             UMIDO_KEY_R
+
+#endif // CONFIG_H

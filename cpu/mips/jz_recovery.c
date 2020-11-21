@@ -24,7 +24,9 @@
 
 #include <common.h>
 #include <command.h>
-#if defined(CONFIG_JZ4760)
+#if defined(CONFIG_JZ4770)
+#include <asm/jz4770.h>
+#elif defined(CONFIG_JZ4760)
 #include <asm/jz4760.h>
 #elif defined(CONFIG_JZ4760B)
 #include <asm/jz4760b.h>
@@ -46,7 +48,7 @@
 
 
 #ifdef CFG_JZ_LINUX_RECOVERY
-
+#error "CFG_JZ_LINUX_RECOVERY is set!!!"
 unsigned int is_jz_linux_recovery;
 extern unsigned char default_environment[];
 extern unsigned char normal_environment[];
