@@ -21,7 +21,10 @@
 #include <common.h>
 #include <asm/io.h>
 
-#include <asm/jzsoc.h>
+//#include <asm/jzsoc.h>
+#if defined(CONFIG_JZ4770)
+#include <asm/jz4770.h>
+#endif
 
 #define BUS_WIDTH    0
 #define BOOT_FROM_P   1

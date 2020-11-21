@@ -4464,69 +4464,15 @@ do {						\
 } while (0)
 
 /*
- * PWM0
- */
-#define __gpio_as_pwm0()			\
-do {						\
-	REG_GPIO_PXFUNS(4) = 0x00100000;	\
-	REG_GPIO_PXSELC(4) = 0x00100000;	\
-	REG_GPIO_PXPES(4) = 0x00100000;		\
-} while (0)
-
-/*
- * PWM1
- */
-#define __gpio_as_pwm1()			\
-do {						\
-	REG_GPIO_PXFUNS(5) = 0x00000800;	\
-	REG_GPIO_PXSELC(5) = 0x00000800;	\
-	REG_GPIO_PXPES(5) = 0x00000800;		\
-} while (0)
-
-/*
- * PWM2
- */
-#define __gpio_as_pwm2()			\
-do {						\
-	REG_GPIO_PXFUNS(4) = 0x00400000;	\
-	REG_GPIO_PXSELC(4) = 0x00400000;	\
-	REG_GPIO_PXPES(4) = 0x00400000;		\
-} while (0)
-
-/*
- * PWM3
- */
-#define __gpio_as_pwm3()			\
-do {						\
-	REG_GPIO_PXFUNS(4) = 0x00800000;	\
-	REG_GPIO_PXSELC(4) = 0x00800000;	\
-	REG_GPIO_PXPES(4) = 0x00800000;		\
-} while (0)
-
-/*
- * PWM4
- */
-#define __gpio_as_pwm4()			\
-do {						\
-	REG_GPIO_PXFUNS(4) = 0x01000000;	\
-	REG_GPIO_PXSELC(4) = 0x01000000;	\
-	REG_GPIO_PXPES(4) = 0x01000000;		\
-} while (0)
-
-/*
- * PWM5
- */
-#define __gpio_as_pwm5()			\
-do {						\
-	REG_GPIO_PXFUNS(4) = 0x02000000;	\
-	REG_GPIO_PXSELC(4) = 0x02000000;	\
-	REG_GPIO_PXPES(4) = 0x02000000;		\
-} while (0)
-
-/*
  * n = 0 ~ 5
  */
-#define __gpio_as_pwm(n)	__gpio_as_pwm##n()
+#define __gpio_as_pwm(n)           \
+do {                                                \
+        REG_GPIO_PXFUNS(4) = 1<<n;          \
+        REG_GPIO_PXTRGC(4) = 1<<n;              \
+        REG_GPIO_PXSELC(4) = 1<<n;              \
+} while (0)
+
 
 
 //-------------------------------------------
@@ -5129,6 +5075,8 @@ static inline void __cpm_select_msc_clk(int n, int sd)
 
 #define __tcu_start_counter(n)		( REG_TCU_TESR |= (1 << (n)) )
 #define __tcu_stop_counter(n)		( REG_TCU_TECR |= (1 << (n)) )
+
+#define __tcu_clear_counter_to_zero(n)   (REG_TCU_TCSR((n)) |= 0x400) //allen add
 
 #define __tcu_half_match_flag(n)	( REG_TCU_TFR & (1 << ((n) + 16)) )
 #define __tcu_full_match_flag(n)	( REG_TCU_TFR & (1 << (n)) )

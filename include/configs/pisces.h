@@ -47,6 +47,8 @@
 #define CONFIG_MSC_TYPE_SD
 #endif
 
+#define mdelay(n)               udelay((n)*1000)
+
 //#define CONFIG_SDRAM_MDDR
 /* memory group */
 // [MAY CHANGE] RAM

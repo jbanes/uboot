@@ -2982,7 +2982,7 @@ RetroFW_G2B_defconfig:
 
 RetroFW_RG280_defconfig:
 	@echo "#define CONFIG_MSC_U_BOOT" > $(obj)include/config.h
-	@echo "#define CONFIG_JZ_RECOVERY">> $(obj)include/config.h
+#	@echo "#define CONFIG_JZ_RECOVERY">> $(obj)include/config.h
 	@echo "#define CONFIG_SDRAM_DDR2" >> $(obj)include/config.h
 	@echo "#define CONFIG_LCD" >> $(obj)include/config.h
 	@echo "#define CONFIG_JZ4760_LCD_RG_IPS" >> $(obj)include/config.h
